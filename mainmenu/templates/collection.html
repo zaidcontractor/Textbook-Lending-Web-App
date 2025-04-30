@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Collections{% endblock %}
+
+{% block extra_css %}
+<style>
+  html, body {
+    height: 100%;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+    overflow-x: hidden;
+  }
+
+  h1, h2 {
+    font-weight: bold;
+  }
+
+  .top-bar {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .form-control {
+    max-width: 500px;
+    margin: 0 auto 20px auto;
+    display: block;
+  }
+
+  .list-unstyled li {
+    margin-bottom: 10px;
+  }
+
+  .collection-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .modal-header {
+    background-color: #4272FF;
+    color: white;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .section-header h2 {
+    margin: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger text-center mt-4">
+      <ul class="mb-0">
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="top-bar">
+    {% if user.is_authenticated %}
+        <div class="mb-3 text-end" style="margin-left: auto; margin-right: 0;">
+            <p class="mb-0">Logged in as {{ user.email }}</p>
+      </div>
+    {% endif %}
+
+  </div>
+
+  <h1 class="text-center my-4">Collections</h1>
+
+  <form method="get" class="mb-4">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search collections by title" class="form-control" />
+    </form>
+
+  {% if user.is_authenticated %}
+    <div class="section-header">
+      <h2>Your Collections</h2>
+      <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCollectionModal">
+        Add New Collection
+      </button>
+    </div>
+
+    {% if user_collections %}
+      <ul class="list-unstyled">
+        {% for c in user_collections %}
+          <li class="collection-card">
+            <a href="{% url 'collection_detail' c.id %}" class="fw-bold text-primary">{{ c.name }}</a> <br>
+            <small class="text-muted">{{ c.description }}</small>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-center">No collections.</p>
+    {% endif %}
+  {% endif %}
+
+  <h2 class="mt-5 mb-3">Collections by Others</h2>
+  {% if collections %}
+    <ul class="list-unstyled">
+      {% for c in collections %}
+        {% if not user.is_authenticated or c.creator != user.profile %}
+          <li class="collection-card">
+            <a href="{% url 'collection_detail' c.id %}" class="fw-bold text-primary">{{ c.name }}</a> <br>
+            <small class="text-muted">{{ c.description }}<br>Created by: {{ c.creator.user.username }}</small>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-center">No collections found.</p>
+  {% endif %}
+</div>
+
+{% if user.is_authenticated %}
+<div class="modal fade" id="addCollectionModal" tabindex="-1" aria-labelledby="addCollectionLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addCollectionLabel">Create New Collection</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+          <form style="padding: 10px 10px 10px 10px;" method="post" action="{% url 'collections' %}">
+              <div class="mb-3">
+              <label for="access" class="form-label">Grant Access To</label>
+              <select class="form-select" id="access" name="access" multiple>
+                {% for profile in form.access.field.queryset %}
+                  <option value="{{ profile.id }}">{{ profile.user.username }}</option>
+                {% endfor %}
+          </select>
+          <small class="form-text text-muted">Select users (excluding librarians) who can access this collection.</small>
+</div>
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="name" class="form-label">Collection Title</label>
+          <input type="text" class="form-control" id="name" name="name" value="{{ form.name.value|default:'' }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="3">{{ form.description.value|default:'' }}</textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="items" class="form-label">Select Items</label>
+          <select class="form-select" id="items" name="items" multiple>
+            {% for item in items %}
+              <option value="{{ item.id }}">{{ item.title }}</option>
+            {% endfor %}
+          </select>
+          <small class="form-text text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple items.</small>
+        </div>
+
+        <div class="mb-3">
+          <label for="visibility" class="form-label">Visibility</label>
+          <select class="form-select" id="visibility" name="visibility">
+            {% if user.profile.userRole == 0 %}
+              <option value="public" selected>Public</option>
+            {% else %}
+              <option value="public" selected>Public</option>
+              <option value="private">Private</option>
+            {% endif %}
+          </select>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-success">Save Collection</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

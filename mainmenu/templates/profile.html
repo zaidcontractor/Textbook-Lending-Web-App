@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="mb-3">
+    <a href="{% url 'home_page' %}" class="btn btn-primary">Back to Homepage</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header text-center">
+      <h2>{{ user.first_name }} {{ user.last_name }}'s Profile</h2>
+    </div>
+    <div class="card-body">
+      <div class="text-center mb-4">
+        {% if USE_AWS %}
+          {% if user.profile.profile_picture and user.profile.profile_picture.url %}
+            <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="img-thumbnail" style="max-width:200px;">
+          {% else %}
+            <img src="{% static 'profile-placeholder.png' %}" alt="Profile Picture" class="img-thumbnail" style="max-width:200px;">
+          {% endif %}
+        {% else %}
+          <img src="{% static 'profile-placeholder.png' %}" alt="Profile Picture" class="img-thumbnail" style="max-width:200px;">
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <p><strong>Real Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Date Joined:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
+      </div>
+
+      <div class="mb-3">
+        <h4>Additional Information</h4>
+        {% if user.profile.major %}
+          <p><strong>Major:</strong> {{ user.profile.major }}</p>
+        {% else %}
+          <p><em>No major provided. <a href="{% url 'edit_profile' %}">Add one?</a></em></p>
+        {% endif %}
+        {% if user.profile.class_year %}
+          <p><strong>Class Year:</strong> {{ user.profile.get_class_year_display }}</p>
+        {% else %}
+          <p><em>No class year provided. <a href="{% url 'edit_profile' %}">Add one?</a></em></p>
+        {% endif %}
+        {% if user.profile.birthday %}
+          <p><strong>Birthday:</strong> {{ user.profile.birthday|date:"F j, Y" }}</p>
+        {% else %}
+          <p><em>No birthday provided. <a href="{% url 'edit_profile' %}">Add one?</a></em></p>
+        {% endif %}
+          <p><strong>Date_Created:</strong> {{ user.profile.date_created }}</p>
+      </div>
+
+      <div class="mb-3">
+        <form action="{% url 'upload_pfp' %}" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-2">
+            <label for="pfp"><strong>Update Profile Picture:</strong></label>
+            <input class="form-control" type="file" id="pfp" name="pfp">
+          </div>
+          <input type="submit" class="btn btn-secondary" value="Upload Picture">
+        </form>
+      </div>
+
+      <div>
+        <a href="{% url 'edit_profile' %}" class="btn btn-primary">Edit Profile Information</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

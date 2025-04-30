@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Librarian Settings{% endblock title %}
+
+{% block extra_css %}
+<style>
+  .form-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 4rem;
+  }
+
+  h1, legend {
+    color: #4272FF;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-check {
+    margin-bottom: 0.75rem;
+  }
+
+  .btn-primary {
+    background-color: #42EAFF;
+    border-color: #42EAFF;
+    color: black;
+    font-weight: bold;
+  }
+  .btn-primary:hover {
+    background-color: #4272FF;
+    border-color: #4272FF;
+    color: white;
+  }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="container form-container">
+  <div class="mb-3 text-end">
+    <p class="mb-0">Logged in as {{ user.email }}</p>
+  </div>
+
+  <form action="{% url 'patron_to_librarian' %}" method="post">
+    {% csrf_token %}
+    <fieldset>
+      <legend>Select who to upgrade to a librarian</legend>
+      {% for patron in patron_list %}
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="patron" id="patron{{ forloop.counter }}" value="{{ patron.id }}">
+        <label class="form-check-label" for="patron{{ forloop.counter }}">{{ patron.user.username }}</label>
+      </div>
+      {% endfor %}
+    </fieldset>
+    <button type="submit" class="btn btn-primary mt-3">Submit</button>
+  </form>
+</div>
+{% endblock content %}

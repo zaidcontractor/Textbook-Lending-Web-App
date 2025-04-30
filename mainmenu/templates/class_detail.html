@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container py-5">
+    <h1 class="display-5 fw-semibold mb-4">{{ class_obj.name }}</h1>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-body">
+        <h4 class="card-title mb-3">Description</h4>
+        <p class="mb-0">{{ class_obj.description|default:"No description provided." }}</p>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-body">
+        <h4 class="card-title mb-3">Required Materials</h4>
+
+        {% if required_tags %}
+          <ul class="list-group list-group-flush">
+            {% for tag in required_tags %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>{{ tag.name }}</span>
+                {% if user.profile.userRole == 1 %}
+                  <a href="{% url 'unlink_required_tag' class_obj.slug tag.id %}"
+                     class="btn btn-sm btn-outline-danger" title="Remove this tag">
+                    &times;
+                  </a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="fst-italic text-muted mb-0">No required materials for this class.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if user.profile.userRole == 1 %}
+      <div class="text-end mb-3">
+        <button class="btn btn-info" data-bs-toggle="collapse" data-bs-target="#tagForm" aria-expanded="false" aria-controls="tagForm">
+          Add Required Tag
+        </button>
+      </div>
+
+      <div class="collapse" id="tagForm">
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-body">
+            <form method="POST" action="{% url 'add_required_tag' class_obj.slug %}" class="row g-3">
+              {% csrf_token %}
+              <div class="col-md-8">
+                <label for="tagSelect" class="form-label">Select Tag</label>
+                <select name="tag_id" id="tagSelect" class="form-select">
+                  {% for tag in available_tags %}
+                    <option value="{{ tag.id }}">{{ tag.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 me-2">Add</button>
+                <button type="button" class="btn btn-secondary w-100" data-bs-toggle="collapse" data-bs-target="#tagForm">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="d-grid">
+      <a href="{% url 'home_page_router' %}" class="btn btn-outline-secondary">&larr; Back to Homepage</a>
+    </div>
+  </div>
+{% endblock %}

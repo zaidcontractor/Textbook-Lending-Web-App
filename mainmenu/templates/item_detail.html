@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load review_tags %}
+
+{% block content %}
+  <div class="container py-5">
+    <h1 class="mb-4">{{ item.title }}</h1>
+
+    <p><strong>Status:</strong> {{ item.get_status_display }}</p>
+
+    <p>
+      <strong>Posted by:</strong>
+      {% if item.owner and item.owner.id %}
+        <a href="{% url 'user_profile' user_id=item.owner.id %}">{{ item.owner.username }}</a>
+        {% if item.owner.profile.userRole == 1 %}
+          <span class="badge bg-primary">Librarian</span>
+        {% endif %}
+      {% else %}
+        <em>Unknown owner</em>
+      {% endif %}
+    </p>
+
+    <p><strong>Location:</strong> {{ item.location|default:"(none)" }}</p>
+    <p><strong>Description:</strong><br>{{ item.description|linebreaks }}</p>
+
+    <p>
+      <strong>Tags:</strong>
+      {% if item.tags.exists %}
+        {% for tag in item.tags.all %}
+          <span class="badge bg-secondary">{{ tag.name }}</span>
+        {% endfor %}
+      {% else %}
+        <em>No tags</em>
+      {% endif %}
+    </p>
+
+    <p>
+      <strong>Collections:</strong>
+      {% if item.collections_of.exists %}
+        {% for coll in item.collections_of.all %}
+          <a href="{% url 'collection_detail' collection_id=coll.id %}"
+             class="badge bg-info text-dark me-1">{{ coll.name }}</a>
+        {% endfor %}
+      {% else %}
+        <em>Not in any collection</em>
+      {% endif %}
+    </p>
+
+    <p><strong>Primary&nbsp;ID:</strong> {{ item.uuid }}</p>
+
+    <hr>
+
+    <h4>Images</h4>
+    {% if USE_AWS and item.images.exists %}
+      <div id="itemCarousel{{ item.pk }}" class="carousel slide mb-4" data-bs-ride="carousel" style="max-width:500px;">
+        <div class="carousel-inner rounded">
+          {% for img in item.images.all %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+              <img src="{{ img.image.url }}" class="d-block w-100" alt="{{ img.caption }}">
+              {% if img.caption %}
+                <div class="carousel-caption d-none d-md-block">
+                  <p class="bg-dark bg-opacity-50 rounded px-2">{{ img.caption }}</p>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if item.images.count > 1 %}
+          <button class="carousel-control-prev" type="button"
+                  data-bs-target="#itemCarousel{{ item.pk }}" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button"
+                  data-bs-target="#itemCarousel{{ item.pk }}" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        {% endif %}
+      </div>
+      {% else %}
+        <p><em>No images uploaded.</em></p>
+    {% endif %}
+
+    <hr>
+
+    <h4>Reviews</h4>
+    {% if item.reviews.exists %}
+      <div class="mb-4">
+        <h5>Average Rating: {{ item.reviews.all|avg_rating }}/5</h5>
+        {% for review in item.reviews.all %}
+          <div class="card mb-3">
+            <div class="card-body">
+              <h6 class="card-title">
+                <a href="{% url 'user_profile' user_id=review.reviewer.id %}">
+                  {{ review.reviewer.username }}
+                </a>
+                <div class="text-warning">
+                  {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= review.rating %}
+                      <i class="fas fa-star"></i>
+                    {% else %}
+                      <i class="far fa-star"></i>
+                    {% endif %}
+                  {% endfor %}
+                  <span class="ms-1">({{ review.rating }}/5)</span>
+                </div>
+              </h6>
+              <p class="card-text">{{ review.review_text|default:"No review text provided." }}</p>
+              <small class="text-muted">{{ review.created_at|date:"F j, Y" }}</small>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p><em>No reviews yet.</em></p>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+      <div class="mt-4">
+        <a href="{% url 'submit_item_review' item_uuid=item.uuid %}" class="btn btn-primary">
+          {% if user_review %}Edit Your Review{% else %}Write a Review{% endif %}
+        </a>
+        {% if user_review %}
+          <form method="post"
+                action="{% url 'delete_item_review' review_id=user_review.id %}?next={% url 'item_detail' uuid=item.uuid %}"
+                style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this review?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger">Delete Review</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="mt-4">
+      {% if user.profile.userRole == 1 and item.owner == user %}
+        {% if item.status == 'available' %}
+          <a href="{% url 'edit_item' uuid=item.uuid %}" class="btn btn-primary me-2">Edit Item</a>
+        {% endif %}
+        <form method="post" action="{% url 'delete_item' uuid=item.uuid %}"
+              style="display:inline;"
+              onsubmit="return confirm('Are you sure you want to delete this item?');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger me-2">Delete Item</button>
+        </form>
+      {% endif %}
+
+      {% if user.is_authenticated and user.profile.userRole == 0 and item.status == 'available' and item.owner != user %}
+        <form method="post" action="{% url 'available_to_requested' %}" style="display:inline;">
+          {% csrf_token %}
+          <input type="hidden" name="item" value="{{ item.pk }}">
+          <button type="submit" class="btn btn-success me-2">Request to Borrow</button>
+        </form>
+      {% endif %}
+
+      <a href="{% url 'home_page' %}" class="btn btn-outline-secondary me-2">&larr; Back to Home</a>
+    </div>
+  </div>
+{% endblock %}

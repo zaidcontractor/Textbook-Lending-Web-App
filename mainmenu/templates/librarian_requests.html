@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Librarian Requests{% endblock %}
+
+{% block extra_css %}
+<style>
+  html, body {
+    height: 100%;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, legend {
+    font-weight: bold;
+  }
+
+  .page-header {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .alert-info {
+    background-color: #d4f1ff;
+    color: #055160;
+    border: 1px solid #bee6fd;
+  }
+
+  .btn-homepage {
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  fieldset {
+    margin-top: 20px;
+  }
+
+  .form-check-label {
+    font-weight: 500;
+  }
+
+  .navbar-nav .nav-link {
+    font-size: 1.1rem;
+  }
+
+  .card-body {
+    padding: 25px;
+  }
+
+  legend.h2 {
+    font-size: 1.5rem;
+    color: #4272FF;
+  }
+
+  input[type="submit"] {
+    margin-right: 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+        <div class="mb-3 text-end" style="margin-left: auto; margin-right: 0;">
+            <p class="mb-0">Logged in as {{ user.email }}</p>
+      </div>
+{% endif %}
+
+<div class="page-header">
+  <h1>Librarian Requests</h1>
+</div>
+
+<div class="container mt-2">
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h4 mb-4">Item Requests</h2>
+      <form action="{% url 'requested_to_in_circulation' %}" method="post">
+        {% csrf_token %}
+        <fieldset>
+          <legend class="h2">Review Item Requests</legend>
+          {% for item in requested_items %}
+            <div class="form-check mb-2">
+              <input type="radio" class="form-check-input" name="item" id="item{{ forloop.counter }}" value="{{ item.id }}">
+              <label class="form-check-label" for="item{{ forloop.counter }}">
+                Item: {{ item.title }} -- Requested by: {{ item.message_set.last.sender.username }}
+              </label>
+            </div>
+          {% empty %}
+            <p class="text-muted">No item requests pending.</p>
+          {% endfor %}
+        </fieldset>
+        <button type="submit" name="yes" value="yes" class="btn btn-success mt-3">Approve</button>
+        <button type="submit" name="no" value="no" class="btn btn-danger mt-3">Deny</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h4 mb-4">Collection Access Requests</h2>
+      <form action="{% url 'process_collection_access_request' %}" method="post">
+        {% csrf_token %}
+        <fieldset>
+          <legend class="h2">Review Collection Access Requests</legend>
+          {% for request in collection_access_requests %}
+            <div class="form-check mb-2">
+              <input type="radio" class="form-check-input" name="request" id="request{{ forloop.counter }}" value="{{ request.id }}">
+              <label class="form-check-label" for="request{{ forloop.counter }}">
+                Collection: {{ request.collection.name }} -- Requested by: {{ request.user.username }}
+              </label>
+            </div>
+          {% empty %}
+            <p class="text-muted">No collection access requests pending.</p>
+          {% endfor %}
+        </fieldset>
+        <button type="submit" name="action" value="approve" class="btn btn-success mt-3">Approve</button>
+        <button type="submit" name="action" value="deny" class="btn btn-danger mt-3">Deny</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %} 

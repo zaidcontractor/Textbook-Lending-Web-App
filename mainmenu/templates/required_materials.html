@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Required Materials{% endblock %}
+
+{% block extra_css %}
+<style>
+  html, body {
+    height: 100%;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+    overflow-x: hidden;
+  }
+
+  .scroll-container {
+    max-height: 45vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 15px;
+    padding-right: 10px;
+    border: 2px solid #42EAFF;
+    border-radius: 10px;
+    background: white;
+  }
+
+  .scroll-container::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scroll-container::-webkit-scrollbar-thumb {
+    background-color: #4272FF;
+    border-radius: 10px;
+  }
+
+  .scroll-container::-webkit-scrollbar-track {
+    background: #e0e0e0;
+  }
+
+  .page-header {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  h2 {
+    color: #222;
+    font-weight: bold;
+    font-size: 2.5rem;
+    margin-bottom: 0;
+  }
+
+  .search-bar {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if user.is_authenticated %}
+        <div class="mb-3 text-end" style="margin-left: auto; margin-right: 0;">
+            <p class="mb-0">Logged in as {{ user.email }}</p>
+      </div>
+{% endif %}
+
+<div class="container">
+  <div class="page-header">
+    <h2>Required Materials</h2>
+  </div>
+
+  <div class="row mb-3 search-bar">
+    <div class="col">
+      <form class="d-flex" method="GET" action="{% url 'required_materials' %}">
+        <input class="form-control me-2" type="search" name="q" placeholder="Search classes..." value="{{ q }}">
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="scroll-container p-3">
+    <div class="list-group">
+      {% for class_obj in classes %}
+        <a href="{% url 'class_detail' class_obj.slug %}" class="list-group-item list-group-item-action mb-2">
+          <h5 class="fw-bold" style="color: #4272FF;">{{ class_obj.name }}</h5>
+          <p class="mb-0">{{ class_obj.description }}</p>
+        </a>
+      {% empty %}
+        <p>No classes available.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

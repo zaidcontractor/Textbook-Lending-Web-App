@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Messaging{% endblock %}
+
+{% block extra_css %}
+<style>
+  html, body {
+    height: 100%;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+    overflow-x: hidden;
+  }
+
+  .page-header {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  h2 {
+    color: #222;
+    font-weight: bold;
+    font-size: 2rem;
+    margin-bottom: 15px;
+  }
+
+  h4 {
+    margin-top: 20px;
+    font-weight: bold;
+    color: #4272FF;
+  }
+
+  ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-bottom: 20px;
+  }
+
+  li {
+    margin-bottom: 8px;
+  }
+
+  .btn-homepage {
+    margin-top: 20px;
+  }
+
+  .navbar-nav .nav-link {
+    font-size: 1.1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+        <div class="mb-3 text-end" style="margin-left: auto; margin-right: 0;">
+            <p class="mb-0">Logged in as {{ user.email }}</p>
+      </div>
+{% endif %}
+
+<div class="page-header">
+  <h2>Messaging</h2>
+</div>
+
+<div class="container mt-2">
+  <h4>Received</h4>
+  <ul>
+      {% for msg in received %}
+        <li><strong>{{ msg.sender.username }}</strong>: {{ msg.content }} ({{ msg.timestamp|date:"M d, Y H:i" }})</li>
+      {% empty %}
+        <li>No messages received.</li>
+      {% endfor %}
+  </ul>
+
+  <h4>Sent</h4>
+  <ul>
+      {% for msg in sent %}
+        <li>To <strong>{{ msg.recipient.username }}</strong>: {{ msg.content }} ({{ msg.timestamp|date:"M d, Y H:i" }})</li>
+      {% empty %}
+        <li>No messages sent.</li>
+      {% endfor %}
+  </ul>
+</div>
+{% endblock %}

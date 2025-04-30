@@ -1,0 +1,36 @@
+/* Glowing Horizon Color Theme */
+.navbar {
+    background-color: #4272FF !important;
+}
+
+h1, h2, h3, h4, h5 {
+    color: #4272FF;
+}
+
+.btn-primary {
+    background-color: #42EAFF;
+    border-color: #42EAFF;
+    color: black;
+}
+
+.btn-primary:hover {
+    background-color: #4272FF;
+    border-color: #4272FF;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #FFB343;
+    border-color: #FFB343;
+    color: black;
+}
+
+.btn-secondary:hover {
+    background-color: #FF7E42;
+    border-color: #FF7E42;
+    color: white;
+}
+
+body {
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+}

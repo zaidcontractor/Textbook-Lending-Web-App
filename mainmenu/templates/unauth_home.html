@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+{% load review_tags %}
+{% load socialaccount %}
+
+{% block title %}Home (Anonymous){% endblock %}
+
+{% block extra_css %}
+<style>
+  html, body {
+    height: 100%;
+    background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+    overflow-x: hidden;
+  }
+
+  .page-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .scroll-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    border: 2px solid #42EAFF;
+    border-radius: 10px;
+    margin-top: 20px;
+  }
+
+  .scroll-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scroll-container::-webkit-scrollbar-thumb {
+    background-color: #4272FF;
+    border-radius: 10px;
+  }
+  .scroll-container::-webkit-scrollbar-track {
+    background: #e0e0e0;
+  }
+
+  h2 {
+    color: #4272FF;
+    font-weight: bold;
+  }
+
+  .badge {
+    background-color: #FF7E42;
+    color: white;
+    font-size: 0.75rem;
+  }
+
+  .card-title {
+    font-weight: bold;
+  }
+
+  .card {
+    transition: transform 0.2s;
+  }
+  .card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+
+  .rating-stars {
+    color: gold;
+  }
+
+  .default-image {
+    height: 180px;
+    object-fit: cover;
+  }
+
+  .navbar-nav .nav-link {
+    color: #444;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+  .navbar-nav .nav-link:hover {
+    color: #FF7E42;
+    text-decoration: underline;
+  }
+
+  .btn-primary {
+    background-color: #42EAFF;
+    border-color: #42EAFF;
+    color: black;
+    font-weight: bold;
+  }
+  .btn-primary:hover {
+    background-color: #4272FF;
+    border-color: #4272FF;
+    color: white;
+  }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light px-4 py-2 shadow-sm">
+  <a class="navbar-brand d-flex align-items-center" href="{% url 'unauth_home_page' %}">
+    <img src="{% static 'mainmenu/images/textbook_logo.png' %}" alt="Logo" style="height: 75px;" class="me-2">
+    <span class="fw-bold">Textbook Lending @ UVA</span>
+  </a>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+          data-bs-target="#navbarNav" aria-controls="navbarNav"
+          aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'required_materials' %}">Required Materials</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'collections' %}">Collections</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% provider_login_url 'google' %}" class="nav-link">Log In</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-content container-lg">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Anonymous Browsing</h2>
+    <p class="mb-0">Browsing as anonymous user.</p>
+  </div>
+
+  <form class="d-flex mb-4" method="GET">
+    <input class="form-control me-2" type="search" name="q" placeholder="Search" value="{{ q }}">
+    <button class="btn btn-primary" type="submit">Search</button>
+  </form>
+
+  <div class="scroll-container">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+      {% for item in items %}
+      <div class="col">
+        <a href="{% url 'item_detail' item.uuid %}" class="text-decoration-none text-reset">
+          <div class="card h-100">
+            {% if USE_AWS and item.images.first %}
+              <img src="{{ item.images.first.image.url }}" class="card-img-top default-image" alt="{{ item.title }}">
+            {% else %}
+              <img src="{% static 'mainmenu/images/default_textbook.png' %}" class="card-img-top default-image" alt="Default textbook">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ item.title }}</h5>
+              <p class="mb-1">
+                {% for tag in item.tags.all %}
+                  <span class="badge">{{ tag.name }}</span>
+                {% endfor %}
+              </p>
+              <p class="mb-1"><small>Owner: {{ item.owner|default:"None" }}</small></p>
+              <p class="mb-1">
+                <small>Status:
+                  {% if item.status == 'available' %}
+                    <span class="badge bg-success">{{ item.get_status_display }}</span>
+                  {% elif item.status == 'in_circulation' %}
+                    <span class="badge bg-primary">{{ item.get_status_display }}</span>
+                  {% elif item.status == 'repairing' %}
+                    <span class="badge bg-warning text-dark">{{ item.get_status_display }}</span>
+                  {% elif item.status == 'lost' %}
+                    <span class="badge bg-danger">{{ item.get_status_display }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ item.get_status_display }}</span>
+                  {% endif %}
+                </small>
+              </p>
+              <p class="mb-1">
+                {% if item.reviews.exists %}
+                  <span class="rating-stars">
+                    {% for i in "12345"|make_list %}
+                      {% if forloop.counter <= item.reviews.all|avg_rating %}
+                        <i class="fas fa-star"></i>
+                      {% else %}
+                        <i class="far fa-star"></i>
+                      {% endif %}
+                    {% endfor %}
+                  </span>
+                  <small>({{ item.reviews.all|avg_rating|floatformat:1 }}/5)</small>
+                {% else %}
+                  <small class="text-muted">No ratings yet</small>
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info">No materials posted yet.</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
